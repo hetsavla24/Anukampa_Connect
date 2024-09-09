@@ -1,6 +1,7 @@
 import express from "express";
 import NGO from "../models/NGO.model.js";
 import bcrypt from "bcryptjs";
+import generateTokenAndSetCookie from "../utils/generateToken.js";
 
 
 
@@ -140,15 +141,20 @@ export const ngo_signup = async (req,res) =>{
             }
         })
 
-        await newNGO.save();
-
-        res.status(201).json({
-            _id: newNGO._id,
-            ngoName: newNGO.NGO_name,
-            username: newNGO.username,
-            latitude: newNGO.geographical_coordinates.latitude,
-            longitude: newNGO.geographical_coordinates.longitude
-        })
+        if(newNGO){
+            //Generate JWT Token
+            await generateTokenAndSetCookie(newNGO._id, res);
+            await newNGO.save();
+            res.status(201).json({
+                _id: newNGO._id,
+                ngoName: newNGO.NGO_name,
+                username: newNGO.username,
+                latitude: newNGO.geographical_coordinates.latitude,
+                longitude: newNGO.geographical_coordinates.longitude
+            });
+        } else{
+            res.status(400).json({ error: "Invalid NGO data"});
+        }
 
           } catch (error) {
             console.log("Error in NGO signup controller",error.message);
@@ -164,8 +170,31 @@ export const volunteer_signup = (req,res) => {
 
 };
 
-export const login = (req,res) => {
-    console.log("login user");
+export const login = async (req,res) => {
+    try {
+        const {NGO_name,registration_number,username,password} = req.body;
+        const ngo = await NGO.findOne({NGO_name,registration_number,username});
+        const isPasswordCorrect = await bcrypt.compare(password, ngo?.password || "");
+
+        if(!ngo || !isPasswordCorrect) {
+            return res.status(400).json({error:"Invalid Username or Password"});
+        }
+
+        generateTokenAndSetCookie(ngo._id, res);
+
+        res.status(201).json({
+            _id: ngo._id,
+            ngoName: ngo.NGO_name,
+            username: ngo.username,
+            latitude: ngo.geographical_coordinates.latitude,
+            longitude: ngo.geographical_coordinates.longitude
+        });
+        
+    } catch (error) {
+        console.log("Error in login controller",error.message);
+        res.status(500).json({error:"Internal Server Error"})
+    }
+    
 };
 
 
