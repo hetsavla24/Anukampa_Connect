@@ -2,6 +2,7 @@ import express from "express";
 import NGO from "../models/NGO.model.js";
 import bcrypt from "bcryptjs";
 import generateTokenAndSetCookie from "../utils/generateToken.js";
+import VOLUNTEER from "../models/VOLUNTEER.model.js";
 
 
 
@@ -165,12 +166,109 @@ export const ngo_signup = async (req,res) =>{
 
 };
 
-export const volunteer_signup = (req,res) => {
-    res.send(" volunteer");
+export const volunteer_signup = async (req,res) => {
+    try {
+      const {
+        personal_info: {
+          fullname,
+          date_of_birth,
+          gender
+        },
+          username,
+          password,
+          confirm_password,
+        contact_info: {
+          phone_number,
+          email_address,
+          alternate_contact_number
+        },
+        location_info,
+          city,
+          state,
+          postal_code,
+        availability: {
+          days_available,
+          hours_available,
+          emergency_availability,
+        },
+        areas_of_interest,
+        date_joined,
+        cases: {
+            accepted_cases,
+            declined_cases
+          }
+      } = req.body;
+
+      if(password !== confirm_password) {
+        return res.status(400).json({error:"Passwords dont match"})
+    }
+
+    // const volunteer = await VOLUNTEER.findOne({contact_info:{phone_number},personal_info:{fullname,date_of_birth}});
+    const volunteer = await VOLUNTEER.findOne({ 'contact_info.phone_number': phone_number, 'personal_info.fullname': fullname, 'personal_info.date_of_birth': date_of_birth });
+
+    if(volunteer) {
+        return res.status(400).json({error:"ALready have an existing account with this phone number!"})
+    }
+
+    //HASH password here
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const newvolunteer = new VOLUNTEER({
+      personal_info: {
+        fullname,
+        date_of_birth,
+        gender
+      },
+        username,
+        password:hashedPassword,
+      contact_info: {
+        phone_number,
+        email_address,
+        alternate_contact_number
+      },
+      location_info,
+        city,
+        state,
+        postal_code,
+      availability: {
+        days_available,
+        hours_available,
+        emergency_availability,
+      },
+      areas_of_interest,
+      date_joined,
+      cases: {
+          accepted_cases,
+          declined_cases
+        }
+    })
+
+    if(newvolunteer){
+      //Generate JWT Token
+      await generateTokenAndSetCookie(newvolunteer._id, res);
+      await newvolunteer.save();
+      res.status(201).json({
+          _id: newvolunteer._id,
+          personal_info: newvolunteer.personal_info,
+          username: newvolunteer.username,
+          gender: newvolunteer.gender,
+          password: newvolunteer.hashedPassword
+      });
+  } else{
+      res.status(400).json({ error: "Invalid volunteer data"});
+  }
+
+    
+    } catch (error) {
+      console.log("Error in volunteer signup controller",error.message);
+            
+      res.status(500).json({error:"Internal Server Error"})
+    }
 
 };
 
-export const login = async (req,res) => {
+export const ngo_login = async (req,res) => {
     try {
         const {NGO_name,registration_number,username,password} = req.body;
         const ngo = await NGO.findOne({NGO_name,registration_number,username});
@@ -191,14 +289,42 @@ export const login = async (req,res) => {
         });
         
     } catch (error) {
-        console.log("Error in login controller",error.message);
+        console.log("Error in ngo login controller",error.message);
         res.status(500).json({error:"Internal Server Error"})
     }
     
 };
 
+export const volunteer_login = async (req,res) => {
+try {
+  const {phone_number,username,password} = req.body;
+        const volunteer = await VOLUNTEER.findOne({'contact_info.phone_number': phone_number,username});
+        const isPasswordCorrect = await bcrypt.compare(password, volunteer?.password || "");
 
-export const logout = (req,res) => {
-    console.log("logout user");
-    
+        if(!volunteer || !isPasswordCorrect) {
+            return res.status(400).json({error:"Invalid Username or Password"});
+        }
+
+        generateTokenAndSetCookie(volunteer._id, res);
+
+        res.status(201).json({
+          _id:volunteer._id,
+          username:volunteer.username,
+          phone_number:volunteer.contact_info.phone_number
+        });
+  
+} catch (error) {
+  console.log("Error in volunteer login controller",error.message);
+  res.status(500).json({error:"Internal Server Error"});
+}
+};
+
+export const logout = async (req,res) => {
+try {
+  res.cookie("jwt","",{maxAge: 0});
+  res.status(200).json({message: "Logged out Successfully!"});
+} catch (error) {
+  console.log("Error in logout controller",error.message);
+  res.status(500).json({error:"Internal Server Error"});
+}    
 };
