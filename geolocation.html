@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Geolocation Test</title>
+  </head>
+  <body>
+    <button class="geo-btn">Get Lat Long</button>
+    <p class="showDetails">Lat long are:</p>
+
+    <script>
+      const showDetails = document.querySelector('.showDetails');
+      const geoBtn = document.querySelector('.geo-btn');
+
+      geoBtn.addEventListener('click', () => {
+        // Indicate the fetching process
+        showDetails.textContent = 'Fetching location...';
+
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              // Log for debugging if callback is working
+              console.log("Geolocation success:", position);
+
+              // Extract lat and long
+              const { latitude, longitude } = position.coords;
+
+              // Update the text content with lat long
+              showDetails.textContent = `Lat: ${latitude}, Long: ${longitude}`;
+            },
+            (error) => {
+              console.log("Geolocation error:", error.message);
+
+              // Show error message on screen
+              showDetails.textContent = `Error: ${error.message}`;
+            }
+          );
+        } else {
+          // Handle case where geolocation is not supported
+          showDetails.textContent = 'Geolocation is not supported by this browser.';
+        }
+      });
+    </script>
+  </body>
+</html>
