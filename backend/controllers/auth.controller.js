@@ -3,6 +3,7 @@ import NGO from "../models/NGO.model.js";
 import bcrypt from "bcryptjs";
 import generateTokenAndSetCookie from "../utils/generateToken.js";
 import VOLUNTEER from "../models/VOLUNTEER.model.js";
+import crypto from 'crypto'; 
 
 
 
@@ -84,11 +85,13 @@ export const ngo_signup = async (req,res) =>{
             return res.status(400).json({error:"NGO at this location already exists"})
         }
  
+        const ngo_ID = crypto.randomBytes(8).toString('hex');
         //HASH password here
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
         const newNGO = new NGO({
+            ngo_ID,
             NGO_name,
             registration_number,
             year_of_establishment,
@@ -143,10 +146,13 @@ export const ngo_signup = async (req,res) =>{
         })
 
         if(newNGO){
+
+          
             //Generate JWT Token
             await generateTokenAndSetCookie(newNGO._id, res);
             await newNGO.save();
             res.status(201).json({
+                ngo_ID: newNGO.ngo_ID,              
                 _id: newNGO._id,
                 ngoName: newNGO.NGO_name,
                 username: newNGO.username,
@@ -182,10 +188,11 @@ export const volunteer_signup = async (req,res) => {
           email_address,
           alternate_contact_number
         },
-        location_info,
+        location_info:{
           city,
           state,
           postal_code,
+        },
         availability: {
           days_available,
           hours_available,
@@ -207,14 +214,16 @@ export const volunteer_signup = async (req,res) => {
     const volunteer = await VOLUNTEER.findOne({ 'contact_info.phone_number': phone_number, 'personal_info.fullname': fullname, 'personal_info.date_of_birth': date_of_birth });
 
     if(volunteer) {
-        return res.status(400).json({error:"ALready have an existing account with this phone number!"})
+        return res.status(400).json({error:"ALready have an existing account!!"})
     }
 
+    const volunteer_ID = crypto.randomBytes(8).toString('hex');
     //HASH password here
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
     const newvolunteer = new VOLUNTEER({
+      volunteer_ID,
       personal_info: {
         fullname,
         date_of_birth,
@@ -248,7 +257,9 @@ export const volunteer_signup = async (req,res) => {
       //Generate JWT Token
       await generateTokenAndSetCookie(newvolunteer._id, res);
       await newvolunteer.save();
+
       res.status(201).json({
+          volunteer_ID: newvolunteer.volunteer_ID,        
           _id: newvolunteer._id,
           personal_info: newvolunteer.personal_info,
           username: newvolunteer.username,
@@ -281,6 +292,7 @@ export const ngo_login = async (req,res) => {
         generateTokenAndSetCookie(ngo._id, res);
 
         res.status(201).json({
+            ngo_ID:ngo.ngo_ID,
             _id: ngo._id,
             ngoName: ngo.NGO_name,
             username: ngo.username,
@@ -308,6 +320,7 @@ try {
         generateTokenAndSetCookie(volunteer._id, res);
 
         res.status(201).json({
+          volunteer_ID:volunteer.volunteer_ID,
           _id:volunteer._id,
           username:volunteer.username,
           phone_number:volunteer.contact_info.phone_number

@@ -1,6 +1,10 @@
 import mongoose from "mongoose";
 
 const volunteerSchema = new mongoose.Schema({
+    volunteer_ID: {
+      type: String,
+      required: true
+    },
     personal_info: {
       fullname: {
         type: String,

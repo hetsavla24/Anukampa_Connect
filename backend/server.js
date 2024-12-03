@@ -1,5 +1,8 @@
 import express from 'express';
 import dotenv from "dotenv";
+import cookieParser from "cookie-parser";
+
+
 
 
 import authRoutes from "./routes/authRoutes.js";
@@ -9,14 +12,14 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-
+app.use(cookieParser());
 // app.get("/",(req,res) => {
 //     res.send("Hello World!");
 // });
 
 app.use(express.json()); //to parse the incoming requests with JSON payloads from  req.body
 
-app.use("/api/auth",authRoutes)
+app.use("/api/auth",authRoutes);
 
 app.listen(PORT,()=> {
     connectToMongoDB();
