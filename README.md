@@ -39,7 +39,7 @@ npm start
 (For ML modules, set up the Python environment as described in the /ml/README.md or relevant folder instructions.)
 
 📌 Screenshots
-
+!(anu_image.jpg)
 🤝 Contributing
 Contributions are welcome! Please fork the repository, make your changes, and submit a pull request.
 
