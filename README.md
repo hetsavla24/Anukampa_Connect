@@ -18,6 +18,8 @@ Anukampa-Connect is a comprehensive platform designed to bridge the gap between 
 - **Machine Learning:** Python (YOLO / OpenCV / Scikit-learn)
 - **APIs:** Google Maps API / Geolocation API
 
+📌 Screenshots
+![Image here](anu_image.jpg)
 ## ⚙️ How to Run
 
 1️⃣ Clone this repository:
@@ -38,8 +40,6 @@ Edit
 npm start
 (For ML modules, set up the Python environment as described in the /ml/README.md or relevant folder instructions.)
 
-📌 Screenshots
-![Image here](anu_image.jpg)
 🤝 Contributing
 Contributions are welcome! Please fork the repository, make your changes, and submit a pull request.
 
